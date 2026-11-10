@@ -55,8 +55,20 @@ export default {
 
   // Open-book / Microsoft Learn quick links.
   docs: [ { n: "RBAC built-in roles", p: "Search phrase to type on Learn", url: "https://learn.microsoft.com/..." } ],
+
+  // OPTIONAL — SDK reference (adds a Learn → SDK tab). Code uses spaces, not tabs.
+  sdk: { desc: "Intro sentence", lang: "python",
+    groups: [ { id: "auth", title: "Auth & clients", icon: "🔑", domain: "plan",
+      pkg: "azure-identity", install: "pip install azure-identity", summary: "One sentence.",
+      api: [ { name: "DefaultAzureCredential()", d: "What it does / exam angle" } ],
+      snippets: [ { title: "Keyless client", code: "from azure.identity import DefaultAzureCredential\n...", notes: ["Optional callout"] } ],
+      gotchas: [ "SDK trap as one sentence." ] } ] },
 };
 ```
+
+Quiz items may also carry `tags: ["sdk"]`; tagged questions get their own filter chip in Practice → Quiz, and can include a `code` fragment plus `mono: true` for code-style options.
+
+Large SDK sections can live in `src/data/sdk/<exam>.js` and be imported by the exam module (files in subfolders aren't treated as exams).
 
 Conventions
 

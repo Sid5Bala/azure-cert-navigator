@@ -118,6 +118,37 @@ for (const id of ids) {
   check(isArr(e.docs) && e.docs.length > 0, id, "docs", "must be a non-empty array");
   (e.docs || []).forEach((d, i) => check(isStr(d.n) && isStr(d.p) && isStr(d.url) && d.url.startsWith("https://"), id, `docs[${i}]`, "needs n, p, https url"));
 
+  // quiz tags (optional)
+  (e.quiz || []).forEach((q, i) => {
+    check(q.tags === undefined || strArr(q.tags), id, `quiz[${i}]`, "tags must be string[]");
+    check(q.code === undefined || isStr(q.code), id, `quiz[${i}]`, "code must be a string");
+    check(q.mono === undefined || typeof q.mono === "boolean", id, `quiz[${i}]`, "mono must be boolean");
+  });
+
+  // sdk (optional)
+  let snippets = 0;
+  if (e.sdk !== undefined) {
+    check(isStr(e.sdk.desc) && isStr(e.sdk.lang) && isArr(e.sdk.groups) && e.sdk.groups.length > 0, id, "sdk", "needs desc, lang, non-empty groups");
+    const gids = new Set();
+    (e.sdk.groups || []).forEach((g, i) => {
+      const w = `sdk.groups[${i}] (${g.id})`;
+      for (const k of ["id", "title", "icon", "pkg", "install", "summary"]) check(isStr(g[k]), id, w, `missing ${k}`);
+      check(!gids.has(g.id), id, w, "duplicate group id");
+      gids.add(g.id);
+      check(domainIds.has(g.domain), id, w, `unknown domain "${g.domain}"`);
+      check(isArr(g.api) && g.api.length > 0, id, w, "api must be a non-empty array");
+      (g.api || []).forEach((a, j) => check(isStr(a.name) && isStr(a.d), id, `${w}.api[${j}]`, "needs name + d"));
+      check(isArr(g.snippets) && g.snippets.length > 0, id, w, "snippets must be a non-empty array");
+      (g.snippets || []).forEach((s, j) => {
+        check(isStr(s.title) && isStr(s.code), id, `${w}.snippets[${j}]`, "needs title + code");
+        check(s.notes === undefined || strArr(s.notes), id, `${w}.snippets[${j}]`, "notes must be string[]");
+        check(!/\t/.test(s.code || ""), id, `${w}.snippets[${j}]`, "use spaces, not tabs, in code");
+      });
+      snippets += (g.snippets || []).length;
+      check(strArr(g.gotchas), id, w, "gotchas must be string[]");
+    });
+  }
+
   const count = (a) => (isArr(a) ? a.length : 0);
   const terms = (e.domains || []).reduce((s, d) => s + count(d.terms), 0);
   const tables = (e.domains || []).reduce((s, d) => s + count(d.tables), 0);
@@ -127,7 +158,8 @@ for (const id of ids) {
   console.log(
     `${ok ? "✓" : "✗"} ${e.code}: ${count(e.domains)} domains, ${terms} terms, ${tables} tables, ${gotchas} gotchas, ` +
       `${count(e.disambig?.groups)} disambig groups, ${svc} services, ${count(e.decisions)} decisions, ${count(e.triggers)} triggers, ` +
-      `${count(e.drills)} drills, ${count(e.quiz)} quiz, ${count(e.docs)} docs`
+      `${count(e.drills)} drills, ${count(e.quiz)} quiz, ${count(e.docs)} docs` +
+      (e.sdk ? `, ${count(e.sdk.groups)} SDK groups / ${snippets} snippets` : "")
   );
 }
 

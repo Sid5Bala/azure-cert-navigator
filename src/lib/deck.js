@@ -11,6 +11,7 @@ export const DECK_CATEGORIES = [
   { id: "confusables", label: "Confusables" },
   { id: "terms", label: "Terms" },
   { id: "traps", label: "Traps" },
+  { id: "sdk", label: "SDK" },
 ];
 
 // Turn "Front: back" / "Front = back" / "Front — back" traps into a prompt + answer when the split is clean.
@@ -39,6 +40,8 @@ export function buildDeck(exam) {
       if (card) add("traps", card.f, card.b, d.short);
     });
   });
+
+  (exam.sdk?.groups || []).forEach((g) => g.api.forEach((a) => add("sdk", a.name, a.d, `${g.pkg}`)));
 
   cache.set(exam.id, cards);
   return cards;

@@ -49,7 +49,7 @@ export default function SearchView({ params }) {
           <div className="stack" style={{ gap: 8 }}>
             {results.map((r, i) => {
               const exam = examById[r.exam];
-              const target = r.type === "Objective" || r.type === "Quiz" ? link(r.path) : link(r.path, { q: r.type === "Table row" ? r.title : q });
+              const target = r.type === "Objective" || r.type === "Quiz" ? link(r.path) : link(r.path, { q: r.type === "Table row" || r.type === "SDK API" ? r.title : q });
               return (
                 <a key={i} className="card result link-card" href={target}>
                   <div className="row" style={{ gap: 6 }}>

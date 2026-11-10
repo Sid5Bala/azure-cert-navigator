@@ -1,6 +1,6 @@
 import { exams } from "../data/index.js";
 import { link } from "../lib/route.js";
-import { SECTIONS, sectionById } from "../nav.js";
+import { SECTIONS, sectionById, tabsFor } from "../nav.js";
 import { Icon } from "./ui.jsx";
 
 const THEME_NEXT = { system: "light", light: "dark", dark: "system" };
@@ -10,7 +10,8 @@ function ExamSwitch({ exam, section, tab }) {
   return (
     <nav className="exam-switch" aria-label="Exam">
       {exams.map((e) => {
-        const path = section && section !== "home" && section !== "search" ? [e.id, section !== "overview" && section, tab].filter(Boolean).join("/") : e.id;
+        const keepTab = tab && tabsFor(section, e).some((t) => t.id === tab) ? tab : null;
+        const path = section && section !== "home" && section !== "search" ? [e.id, section !== "overview" && section, keepTab].filter(Boolean).join("/") : e.id;
         return (
           <a key={e.id} href={link(path)} className={"exam-chip" + (exam?.id === e.id ? " active" : "")} style={{ "--chip": e.color }} aria-current={exam?.id === e.id ? "page" : undefined}>
             <span className="dot" />
@@ -57,7 +58,7 @@ export default function Header({ exam, activeExam, section, tab, theme, onTheme 
         </div>
         {exam && sec?.tabs && (
           <nav className="subtabs" aria-label={`${sec.label} views`}>
-            {sec.tabs.map((t) => {
+            {tabsFor(sec.id, exam).map((t) => {
               const n = t.count?.(exam);
               return (
                 <a key={t.id} href={link(`${exam.id}/${sec.id}/${t.id}`)} className={"subtab" + (tab === t.id ? " active" : "")} aria-current={tab === t.id ? "page" : undefined}>

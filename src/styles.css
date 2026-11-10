@@ -30,6 +30,14 @@
   --mono: ui-monospace, "Cascadia Code", "SF Mono", Menlo, Consolas, monospace;
   --font: "Inter", "Segoe UI Variable Text", "Segoe UI", -apple-system, BlinkMacSystemFont, system-ui, Roboto, sans-serif;
   --bottom-nav: 64px;
+  --code-bg: #f5f7fb;
+  --code-text: #1e293b;
+  --tk-comment: #6b7a90;
+  --tk-string: #0f7b3f;
+  --tk-number: #b45309;
+  --tk-keyword: #7c3aed;
+  --tk-func: #1d4ed8;
+  --tk-type: #0e7490;
 }
 
 @media (prefers-color-scheme: dark) {
@@ -56,6 +64,14 @@
     --shadow-lg: 0 18px 40px rgba(0, 0, 0, 0.4);
     --header-bg: rgba(11, 17, 32, 0.84);
     --accent-ink: color-mix(in srgb, var(--accent) 70%, #ffffff);
+    --code-bg: #0a1222;
+    --code-text: #d6deea;
+    --tk-comment: #7b8aa5;
+    --tk-string: #86efac;
+    --tk-number: #fbbf24;
+    --tk-keyword: #c4b5fd;
+    --tk-func: #93c5fd;
+    --tk-type: #67e8f9;
   }
 }
 
@@ -82,6 +98,14 @@
   --shadow-lg: 0 18px 40px rgba(0, 0, 0, 0.4);
   --header-bg: rgba(11, 17, 32, 0.84);
   --accent-ink: color-mix(in srgb, var(--accent) 70%, #ffffff);
+  --code-bg: #0a1222;
+  --code-text: #d6deea;
+  --tk-comment: #7b8aa5;
+  --tk-string: #86efac;
+  --tk-number: #fbbf24;
+  --tk-keyword: #c4b5fd;
+  --tk-func: #93c5fd;
+  --tk-type: #67e8f9;
 }
 
 /* ---------- Base ---------- */
@@ -414,6 +438,32 @@ table.data.wide { min-width: 640px; }
 .toast { position: fixed; left: 50%; transform: translateX(-50%); bottom: calc(var(--bottom-nav) + 16px + env(safe-area-inset-bottom)); z-index: 60; display: flex; gap: 12px; align-items: center; padding: 10px 12px 10px 16px; border-radius: 14px; background: var(--text-strong); color: var(--bg); box-shadow: var(--shadow-lg); font-size: 14px; font-weight: 600; max-width: calc(100vw - 32px); }
 .toast .btn { background: var(--accent); border-color: var(--accent); color: #fff; }
 @media (min-width: 900px) { .toast { bottom: 24px; } }
+
+/* SDK / code */
+.code { position: relative; border: 1px solid var(--border-soft); border-radius: 12px; background: var(--code-bg); overflow: hidden; }
+.code-head { display: flex; justify-content: space-between; align-items: center; gap: 8px; padding: 6px 6px 6px 13px; border-bottom: 1px solid var(--border-soft); font-size: 13px; font-weight: 700; color: var(--text-strong); background: color-mix(in srgb, var(--code-bg) 70%, var(--surface)); }
+.code-body { margin: 0; padding: 12px 14px; overflow-x: auto; -webkit-overflow-scrolling: touch; font-family: var(--mono); font-size: 13px; line-height: 1.6; color: var(--code-text); tab-size: 4; }
+.code > .code-copy { position: absolute; top: 6px; right: 6px; }
+.code-copy { color: var(--muted); }
+.tk-c { color: var(--tk-comment); font-style: italic; }
+.tk-s { color: var(--tk-string); }
+.tk-n { color: var(--tk-number); }
+.tk-k { color: var(--tk-keyword); font-weight: 600; }
+.tk-f { color: var(--tk-func); }
+.tk-t { color: var(--tk-type); }
+.install { display: flex; align-items: center; gap: 8px; padding: 6px 6px 6px 12px; border-radius: 10px; background: var(--code-bg); border: 1px solid var(--border-soft); font-family: var(--mono); font-size: 13px; color: var(--code-text); }
+.install span { flex: 1; min-width: 0; overflow-wrap: anywhere; }
+@media (max-width: 640px) {
+  .api-table thead { display: none; }
+  .api-table tr { display: block; padding: 10px 12px; border-bottom: 1px solid var(--border-soft); }
+  .api-table tr:last-child { border-bottom: 0; }
+  .api-table td { display: block; padding: 0; border: 0; }
+  .api-table td + td { margin-top: 4px; color: var(--muted); }
+}
+.api-name { font-family: var(--mono); font-size: 12.5px; color: var(--accent-ink); white-space: normal; }
+.sdk-group { padding: 16px; display: flex; flex-direction: column; gap: 12px; scroll-margin-top: 140px; }
+.sdk-notes { margin: 6px 0 0; padding-left: 18px; color: var(--muted); font-size: 13.5px; }
+.sdk-notes li { margin: 2px 0; }
 
 .kbd { font-family: var(--mono); font-size: 11.5px; padding: 1px 6px; border-radius: 6px; border: 1px solid var(--border); background: var(--surface-2); color: var(--muted); }
 .footer { margin-top: 36px; padding-top: 16px; border-top: 1px solid var(--border-soft); font-size: 12.5px; color: var(--faint); display: flex; justify-content: space-between; gap: 12px; flex-wrap: wrap; }

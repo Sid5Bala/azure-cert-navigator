@@ -4,6 +4,7 @@ import { quizId, drillId } from "../lib/progress.js";
 import { buildDeck, DECK_CATEGORIES, MASTERED_BOX, MAX_BOX } from "../lib/deck.js";
 import { matches, pct, shuffle } from "../lib/text.js";
 import { Chips, Empty, Hl, Icon, Pill, Progress, Ring, SearchBox } from "../components/ui.jsx";
+import { CodeBlock } from "../components/Code.jsx";
 
 const LETTERS = ["A", "B", "C", "D", "E"];
 
@@ -11,17 +12,25 @@ function domainChips(exam) {
   return [{ id: "all", label: "All domains" }, ...exam.domains.map((d) => ({ id: d.id, label: d.short }))];
 }
 
+// Quiz filter chips: domains plus any content tags (e.g. "SDK code").
+function quizChips(exam) {
+  const tags = [...new Set(exam.quiz.flatMap((q) => q.tags || []))];
+  return [...domainChips(exam), ...tags.map((t) => ({ id: "tag:" + t, label: `${t.toUpperCase()} code` }))];
+}
+
+const inQuizFilter = (q, filter) => (filter === "all" ? true : filter.startsWith("tag:") ? (q.tags || []).includes(filter.slice(4)) : q.domain === filter);
+
 /* ---------------- Quiz ---------------- */
 
 function Quiz({ exam, params }) {
   const [history, setHistory] = useStored(keys.quiz(exam.id), {});
-  const [domain, setDomain] = useState(params.get("domain") && exam.domains.some((d) => d.id === params.get("domain")) ? params.get("domain") : "all");
+  const [domain, setDomain] = useState(quizChips(exam).some((c) => c.id === params.get("domain")) ? params.get("domain") : "all");
   const [mode, setMode] = useState("all");
   const [size, setSize] = useState("10");
   const [run, setRun] = useState(null); // { list, i, picked, results }
 
   const pool = useMemo(() => {
-    let qs = exam.quiz.filter((q) => domain === "all" || q.domain === domain);
+    let qs = exam.quiz.filter((q) => inQuizFilter(q, domain));
     if (mode === "unanswered") qs = qs.filter((q) => !history[quizId(q)]);
     if (mode === "missed") qs = qs.filter((q) => history[quizId(q)] && !history[quizId(q)].last);
     return qs;
@@ -83,7 +92,7 @@ function Quiz({ exam, params }) {
         <div className="card pad stack" style={{ gap: 14 }}>
           <div>
             <div className="stat-label" style={{ marginBottom: 6 }}>Domain</div>
-            <Chips items={domainChips(exam)} value={domain} onChange={setDomain} />
+            <Chips items={quizChips(exam)} value={domain} onChange={setDomain} />
           </div>
           <div>
             <div className="stat-label" style={{ marginBottom: 6 }}>Questions</div>
@@ -126,6 +135,7 @@ function Quiz({ exam, params }) {
           {wrong.map(({ q, picked }) => (
             <div key={q.q} className="card pad">
               <div className="strong">{q.q}</div>
+              {q.code && <div style={{ marginTop: 8 }}><CodeBlock code={q.code} /></div>}
               <div className="small" style={{ marginTop: 8, color: "var(--bad)" }}>Your answer: {q.options[picked]}</div>
               <div className="small" style={{ marginTop: 2, color: "var(--ok)", fontWeight: 700 }}>Correct: {q.options[q.answer]}</div>
               <div className="explain" style={{ marginTop: 10 }}>{q.explain}</div>
@@ -151,6 +161,7 @@ function Quiz({ exam, params }) {
       </div>
       <Progress value={pct(run.i + (done ? 1 : 0), run.list.length)} />
       <h2 style={{ fontSize: 19, margin: "18px 0 14px", lineHeight: 1.4 }}>{q.q}</h2>
+      {q.code && <div style={{ marginBottom: 14 }}><CodeBlock code={q.code} /></div>}
       <div className="stack" style={{ gap: 8 }}>
         {q.options.map((opt, idx) => {
           let cls = "option";
@@ -159,7 +170,7 @@ function Quiz({ exam, params }) {
           return (
             <button key={idx} className={cls} disabled={done} onClick={() => answer(idx)}>
               <span className="key">{done && idx === q.answer ? <Icon name="check" size={15} stroke={3} /> : done && idx === run.picked ? <Icon name="x" size={15} stroke={3} /> : LETTERS[idx]}</span>
-              <span>{opt}</span>
+              <span style={q.mono ? { fontFamily: "var(--mono)", fontSize: 14 } : undefined}>{opt}</span>
             </button>
           );
         })}
@@ -324,7 +335,7 @@ function Flashcards({ exam }) {
         <Pill tone="ok">{mastered}/{deck.length} mastered</Pill>
       </div>
       <div className="stack" style={{ gap: 8, marginBottom: 16 }}>
-        <Chips items={DECK_CATEGORIES.map((c) => ({ id: c.id, label: `${c.label} ${counts[c.id]}` }))} value={cat} onChange={(v) => reset(() => setCat(v))} />
+        <Chips items={DECK_CATEGORIES.filter((c) => counts[c.id] > 0).map((c) => ({ id: c.id, label: `${c.label} ${counts[c.id]}` }))} value={cat} onChange={(v) => reset(() => setCat(v))} />
         <Chips items={[{ id: "smart", label: "Smart (weak first)" }, { id: "shuffle", label: "Shuffled" }, { id: "weak", label: "Missed only" }]} value={mode} onChange={(v) => reset(() => setMode(v))} />
       </div>
 

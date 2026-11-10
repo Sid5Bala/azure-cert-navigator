@@ -6,6 +6,7 @@ export const SECTIONS = [
       { id: "domains", label: "Domains", count: (e) => e.domains.length },
       { id: "services", label: "Services", count: (e) => e.services.reduce((s, c) => s + c.services.length, 0) },
       { id: "confused", label: "Confused?", count: (e) => e.disambig.groups.length },
+      { id: "sdk", label: "SDK", count: (e) => e.sdk?.groups.length, show: (e) => !!e.sdk },
       { id: "docs", label: "Docs", count: (e) => e.docs.length },
     ],
   },
@@ -30,4 +31,9 @@ export const sectionById = Object.fromEntries(SECTIONS.map((s) => [s.id, s]));
 
 export function defaultTab(sectionId) {
   return sectionById[sectionId]?.tabs?.[0]?.id;
+}
+
+// Tabs available for a given exam (some tabs only exist when the exam has that content).
+export function tabsFor(sectionId, exam) {
+  return (sectionById[sectionId]?.tabs || []).filter((t) => !t.show || t.show(exam));
 }

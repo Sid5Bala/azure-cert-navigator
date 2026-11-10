@@ -2,6 +2,7 @@ import { useState } from "react";
 import { link } from "../lib/route.js";
 import { matches, norm } from "../lib/text.js";
 import { Chips, Collapse, DataTable, Empty, Hl, Icon, Pill, SearchBox, Tip } from "../components/ui.jsx";
+import { CodeBlock, CopyButton } from "../components/Code.jsx";
 
 function DomainList({ exam }) {
   return (
@@ -47,6 +48,7 @@ function DomainDetail({ exam, domain, params }) {
     .filter(Boolean);
   const traps = domain.gotchas.map((g, i) => ({ g, n: i + 1 })).filter((x) => matches(x.g, q));
   const bp = exam.blueprint.find((b) => b.id === domain.id);
+  const sdkGroups = (exam.sdk?.groups || []).filter((g) => g.domain === domain.id);
   const nothing = q && !terms.length && !tables.length && !traps.length;
 
   return (
@@ -69,6 +71,15 @@ function DomainDetail({ exam, domain, params }) {
       <div className="toolbar">
         <SearchBox value={q} onChange={setQ} placeholder={`Filter ${domain.short} terms, tables, traps…`} />
       </div>
+
+      {sdkGroups.length > 0 && !q && (
+        <div className="row" style={{ marginBottom: 6 }}>
+          <span className="small faint">SDK for this domain:</span>
+          {sdkGroups.map((g) => (
+            <a key={g.id} className="chip" href={link(`${exam.id}/learn/sdk`, { g: g.id })}>{g.icon} {g.title}</a>
+          ))}
+        </div>
+      )}
 
       {nothing && <Empty />}
 
@@ -213,6 +224,95 @@ function Confused({ exam, params }) {
   );
 }
 
+function Sdk({ exam, params }) {
+  const [q, setQ] = useState(params.get("q") || "");
+  const [gid, setGid] = useState(exam.sdk.groups.some((g) => g.id === params.get("g")) ? params.get("g") : "all");
+  const chips = [{ id: "all", label: "All" }, ...exam.sdk.groups.map((g) => ({ id: g.id, label: `${g.icon} ${g.title}` }))];
+
+  const groups = exam.sdk.groups
+    .filter((g) => gid === "all" || g.id === gid)
+    .map((g) => {
+      if (!q || matches([g.title, g.pkg, g.summary].join(" "), q)) return g;
+      const api = g.api.filter((a) => matches(a.name + " " + a.d, q));
+      const snippets = g.snippets.filter((s) => matches([s.title, s.code, ...(s.notes || [])].join(" "), q));
+      const gotchas = g.gotchas.filter((x) => matches(x, q));
+      return api.length || snippets.length || gotchas.length ? { ...g, api, snippets, gotchas } : null;
+    })
+    .filter(Boolean);
+
+  return (
+    <>
+      <div className="page-head">
+        <div>
+          <h1>SDK quick reference</h1>
+          <p>{exam.sdk.desc}</p>
+        </div>
+        <Pill tone="neutral">{exam.sdk.lang}</Pill>
+      </div>
+      <div className="toolbar">
+        <SearchBox value={q} onChange={setQ} placeholder="Filter classes, methods, code…" />
+      </div>
+      <div style={{ marginBottom: 14 }}>
+        <Chips items={chips} value={gid} onChange={setGid} />
+      </div>
+      {!groups.length && <Empty />}
+      <div className="stack" style={{ gap: 16 }}>
+        {groups.map((g) => {
+          const dom = exam.domains.find((d) => d.id === g.domain);
+          return (
+            <section key={g.id} id={`sdk-${g.id}`} className="card sdk-group" style={{ borderTop: `3px solid ${dom?.color || "var(--accent)"}` }}>
+              <div className="row" style={{ justifyContent: "space-between" }}>
+                <h2 style={{ fontSize: 17 }}><span aria-hidden="true">{g.icon}</span> <Hl text={g.title} q={q} /></h2>
+                {dom && <a href={link(`${exam.id}/learn/domains/${dom.id}`)}><Pill color={dom.color}>{dom.short}</Pill></a>}
+              </div>
+              <p className="muted small"><Hl text={g.summary} q={q} /></p>
+              <div className="install">
+                <span>{g.install}</span>
+                <CopyButton text={g.install} />
+              </div>
+
+              {g.api.length > 0 && (
+                <div className="table-wrap">
+                  <table className="data api-table">
+                    <thead><tr><th>Key API</th><th>What it's for</th></tr></thead>
+                    <tbody>
+                      {g.api.map((a) => (
+                        <tr key={a.name}>
+                          <td className="api-name"><Hl text={a.name} q={q} /></td>
+                          <td><Hl text={a.d} q={q} /></td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+
+              {g.snippets.map((s) => (
+                <div key={s.title}>
+                  <CodeBlock title={s.title} code={s.code} />
+                  {s.notes?.length > 0 && <ul className="sdk-notes">{s.notes.map((n) => <li key={n}><Hl text={n} q={q} /></li>)}</ul>}
+                </div>
+              ))}
+
+              {g.gotchas.length > 0 && (
+                <div className="stack" style={{ gap: 6 }}>
+                  <div className="stat-label" style={{ color: "var(--bad)" }}>SDK traps</div>
+                  {g.gotchas.map((x, i) => (
+                    <div key={i} className="trap">
+                      <span className="trap-n">{String(i + 1).padStart(2, "0")}</span>
+                      <span><Hl text={x} q={q} /></span>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </section>
+          );
+        })}
+      </div>
+    </>
+  );
+}
+
 function Docs({ exam, params }) {
   const [q, setQ] = useState(params.get("q") || "");
   const docs = exam.docs.filter((d) => matches(d.n + " " + d.p, q));
@@ -251,5 +351,6 @@ export default function Learn({ exam, tab, item, params }) {
   }
   if (tab === "services") return <Services exam={exam} params={params} />;
   if (tab === "confused") return <Confused exam={exam} params={params} />;
+  if (tab === "sdk" && exam.sdk) return <Sdk exam={exam} params={params} />;
   return <Docs exam={exam} params={params} />;
 }

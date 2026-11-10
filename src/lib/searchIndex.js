@@ -26,12 +26,19 @@ export function buildIndex(exam) {
   exam.drills.forEach((d) => add("Drill", d.s, d.a, `${base}/practice/drills`, ""));
   exam.quiz.forEach((q) => add("Quiz", q.q, q.explain, `${base}/practice/quiz`, ""));
   exam.docs.forEach((d) => add("Doc", d.n, d.p, `${base}/learn/docs`, ""));
+  (exam.sdk?.groups || []).forEach((g) => {
+    const p = `${base}/learn/sdk`;
+    add("SDK", g.title, `${g.pkg} ${g.summary}`, p, g.pkg);
+    g.api.forEach((a) => add("SDK API", a.name, a.d, p, g.title));
+    g.snippets.forEach((s) => add("SDK snippet", s.title, s.code, p, g.title));
+    g.gotchas.forEach((x) => add("SDK trap", x, "", p, g.title));
+  });
 
   cache.set(exam.id, items);
   return items;
 }
 
-const TYPE_RANK = { Service: 0, Confusable: 1, Term: 2, Trigger: 3, "Decision tree": 4, Table: 5, "Table row": 6, Trap: 7, Drill: 8, Quiz: 9, Objective: 10, Doc: 11 };
+const TYPE_RANK = { Service: 0, Confusable: 1, Term: 2, Trigger: 3, "Decision tree": 4, SDK: 4, "SDK API": 5, Table: 5, "Table row": 6, "SDK snippet": 6, Trap: 7, "SDK trap": 7, Drill: 8, Quiz: 9, Objective: 10, Doc: 11 };
 
 export function search(examList, query, limit = 80) {
   const q = norm(query).trim();

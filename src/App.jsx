@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { exams, examById } from "./data/index.js";
 import { useRoute, go } from "./lib/route.js";
 import { useStored, keys } from "./lib/storage.js";
-import { defaultTab, sectionById } from "./nav.js";
+import { defaultTab, sectionById, tabsFor } from "./nav.js";
 import Header from "./components/Header.jsx";
 import BottomNav from "./components/BottomNav.jsx";
 import Home from "./views/Home.jsx";
@@ -42,7 +42,7 @@ export default function App() {
   const exam = !isSearch && p0 ? examById[p0] : null;
   const activeExam = exam || examById[lastExam] || exams[0];
   const section = isSearch ? "search" : exam ? (sectionById[p1] ? p1 : "overview") : "home";
-  const tab = exam && sectionById[section]?.tabs ? (sectionById[section].tabs.some((t) => t.id === p2) ? p2 : defaultTab(section)) : undefined;
+  const tab = exam && sectionById[section]?.tabs ? (tabsFor(section, exam).some((t) => t.id === p2) ? p2 : defaultTab(section)) : undefined;
   const path = route.parts.join("/");
 
   useEffect(() => {
